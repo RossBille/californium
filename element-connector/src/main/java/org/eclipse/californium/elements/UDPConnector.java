@@ -314,6 +314,8 @@ public class UDPConnector implements Connector {
 
 		protected void work() throws InterruptedException, IOException {
 			RawData raw = outgoing.take(); // Blocking
+			LOGGER.log(Level.FINER, "UDPConnector work()");
+			
 			/* check, if message should be sent with the "none correlation context" of UDP connector */
 			CorrelationContextMatcher correlationMatcher = UDPConnector.this.correlationContextMatcher;
 			if (correlationMatcher != null && !correlationMatcher.isToBeSent(raw.getCorrelationContext(), null)) {

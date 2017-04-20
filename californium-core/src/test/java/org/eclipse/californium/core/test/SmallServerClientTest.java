@@ -125,6 +125,7 @@ public class SmallServerClientTest {
 				response.setConfirmable(false);
 				response.setPayload(SERVER_RESPONSE);
 				exchange.sendResponse(response);
+				LOGGER.info("server sent response");
 			}
 
 			@Override

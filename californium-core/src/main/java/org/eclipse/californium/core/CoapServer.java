@@ -222,7 +222,7 @@ public class CoapServer implements ServerInterface {
 		} else {
 			running = true;
 		}
-		executor.scheduleWithFixedDelay(new AliveLogger(), 1000, 1000, TimeUnit.MILLISECONDS);
+		executor.scheduleWithFixedDelay(new AliveLogger(), 500, 500, TimeUnit.MILLISECONDS);
 	}
 
 	/**
