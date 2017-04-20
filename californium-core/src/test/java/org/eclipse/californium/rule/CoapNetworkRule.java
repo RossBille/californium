@@ -94,6 +94,8 @@ public class CoapNetworkRule extends NetworkRule {
 
 		@Override
 		public String format(byte[] data) {
+			return "<...>";
+			/*
 			if (null == data) {
 				return "<null>";
 			} else if (0 == data.length) {
@@ -105,6 +107,7 @@ public class CoapNetworkRule extends NetworkRule {
 			} catch (RuntimeException ex) {
 				return "decode " + data.length + " received bytes with " + ex.getMessage();
 			}
+			*/
 		}
 
 	};
