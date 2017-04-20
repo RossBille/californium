@@ -20,6 +20,7 @@
  *                                                    explicit String concatenation
  *    Achim Kraus (Bosch Software Innovations GmbH) - use nanoTime instead of 
  *                                                    currentTimeMillis
+ *    Achim Kraus (Bosch Software Innovations GmbH) - use volatile for future and running
  ******************************************************************************/
 package org.eclipse.californium.core.network.deduplication;
 
@@ -53,7 +54,7 @@ public final class SweepDeduplicator implements Deduplicator {
 	private final ConcurrentMap<KeyMID, Exchange> incomingMessages = new ConcurrentHashMap<>();
 	private final SweepAlgorithm algorithm;
 	private ScheduledExecutorService scheduler;
-	private boolean running = false;
+	private volatile boolean running = false;
 
 	/**
 	 * Creates a new deduplicator from configuration values.
@@ -77,21 +78,21 @@ public final class SweepDeduplicator implements Deduplicator {
 	@Override
 	public synchronized void start() {
 		if (!running) {
+			running = true;
 			if (scheduler == null || scheduler.isShutdown()) {
 				scheduler = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("Deduplicator"));
 			}
 			algorithm.schedule();
-			running = true;
 		}
 	}
 
 	@Override
 	public synchronized void stop() {
 		if (running) {
+			running = false;
 			algorithm.cancel();
 			scheduler.shutdown();
 			clear();
-			running = false;
 		}
 	}
 
@@ -130,7 +131,7 @@ public final class SweepDeduplicator implements Deduplicator {
 
 		private final long sweepInterval;
 		private final long exchangeLifetime;
-		private ScheduledFuture<?> future;
+		private volatile ScheduledFuture<?> future;
 
 		/**
 		 * @param config
@@ -186,7 +187,7 @@ public final class SweepDeduplicator implements Deduplicator {
 		 * Reschedule this task again.
 		 */
 		private void schedule() {
-			if (!scheduler.isShutdown()) {
+			if (running) {
 				future = scheduler.schedule(this, sweepInterval, TimeUnit.MILLISECONDS);
 			}
 		}
@@ -195,6 +196,7 @@ public final class SweepDeduplicator implements Deduplicator {
 		 * Cancels sweep-run scheduled next.
 		 */
 		private void cancel() {
+			ScheduledFuture<?> future = this.future;
 			if (future != null) {
 				future.cancel(false);
 			}
