@@ -16,6 +16,7 @@
  *                                                    redirect this to logging.properties
  *                                                    (handler must be adjusted anyway).
  *                                                    Set InterruptedException as cause.
+ *    Achim Kraus (Bosch Software Innovations GmbH) - reuse formatted datagram for logging
  ******************************************************************************/
 package org.eclipse.californium.elements.util;
 
@@ -302,6 +303,11 @@ public class DirectDatagramSocketImpl extends AbstractDatagramSocketImpl {
 		public final byte[] data;
 
 		/**
+		 * Formatted datagram.
+		 */
+		public volatile String message;
+
+		/**
 		 * Create datagram exchange.
 		 * 
 		 * @param address local address
@@ -326,11 +332,16 @@ public class DirectDatagramSocketImpl extends AbstractDatagramSocketImpl {
 		public String format(final Setup currentSetup) {
 			long tid = Thread.currentThread().getId();
 			String delay = "";
-			String content = "";
+			String content = message;
 			String destination = "";
 			if (null != currentSetup) {
-				if (null != currentSetup.formatter) {
-					content = currentSetup.formatter.format(data);
+				if (null != currentSetup.formatter && null == content) {
+					synchronized (this) {
+						if (null == message) {
+							message = currentSetup.formatter.format(data);
+						}
+						content = message;
+					}
 				}
 				if (0 < currentSetup.delayInMs) {
 					delay = String.format("%dms", currentSetup.delayInMs);
