@@ -222,6 +222,7 @@ public class CoapServer implements ServerInterface {
 		} else {
 			running = true;
 		}
+		executor.scheduleWithFixedDelay(new AliveLogger(), 1000, 1000, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -428,5 +429,23 @@ public class CoapServer implements ServerInterface {
 		public List<Endpoint> getEndpoints() {
 			return CoapServer.this.getEndpoints();
 		}
+	}
+
+	private class AliveLogger implements Runnable {
+
+		private int counter;
+		private final long nanos;
+
+		public AliveLogger() {
+			this.nanos = System.nanoTime();
+		}
+
+		@Override
+		public void run() {
+			++counter;
+			long time = TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - nanos) / counter);
+			LOGGER.log(Level.INFO, "alife {0}. {1}ms", new Object[] { counter, time });
+		}
+
 	}
 }
