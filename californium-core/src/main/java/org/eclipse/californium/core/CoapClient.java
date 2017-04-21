@@ -21,6 +21,13 @@
  ******************************************************************************/
 package org.eclipse.californium.core;
 
+import org.eclipse.californium.core.coap.*;
+import org.eclipse.californium.core.coap.CoAP.Type;
+import org.eclipse.californium.core.network.Endpoint;
+import org.eclipse.californium.core.network.EndpointManager;
+import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.elements.util.NamedThreadFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -29,19 +36,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.eclipse.californium.core.coap.BlockOption;
-import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.CoAP.Type;
-import org.eclipse.californium.core.coap.LinkFormat;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
-import org.eclipse.californium.core.coap.MessageObserverAdapter;
-import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.Response;
-import org.eclipse.californium.core.network.Endpoint;
-import org.eclipse.californium.core.network.EndpointManager;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.elements.util.NamedThreadFactory;
 
 /**
  * The Class CoapClient.
@@ -67,6 +61,8 @@ public class CoapClient {
 
 	/** The endpoint. */
 	private Endpoint endpoint;
+
+	private boolean orderMatters = true;
 
 	/**
 	 * Constructs a new CoapClient that has no destination URI yet.
@@ -1025,6 +1021,10 @@ public class CoapClient {
 		}
 	}
 
+	public void setOrderMatters(boolean orderMatters) {
+		this.orderMatters = orderMatters;
+	}
+
 	/**
 	 * The MessageObserverImpl is called when a response arrives. It wraps the
 	 * response into a CoapResponse and lets the executor invoke the handler's
@@ -1119,7 +1119,7 @@ public class CoapClient {
 		
 		/** The observer relation relation. */
 		private final CoapObserveRelation relation;
-		
+
 		/**
 		 * Constructs a new message observer with the specified handler and the
 		 * specified relation.
@@ -1140,7 +1140,7 @@ public class CoapClient {
 		 */
 		@Override protected void deliver(CoapResponse response) {
 			synchronized (relation) {
-				if (relation.getOrderer().isNew(response.advanced())) {
+				if (relation.getOrderer().isNew(response.advanced()) || !orderMatters) {
 					relation.setCurrent(response);
 					relation.prepareReregistration(response, 2000);
 					handler.onLoad(response);
